@@ -23,7 +23,7 @@ func main() {
 		Realtime: make(chan wrsbmkg.DataJSON),
 		Narasi:   make(chan string),
 
-		Interval: time.Second * 3,
+		Interval: time.Second * 15,
 		API_URL:  wrsbmkg.DEFAULT_API_URL,
 
 		HTTP_Client: http.Client{
