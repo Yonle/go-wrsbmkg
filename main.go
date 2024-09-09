@@ -46,13 +46,6 @@ func umn() int64 {
 	return now.UnixMilli()
 }
 
-func checkProperty(ok bool, f string, p string) {
-	if !ok {
-		e := fmt.Sprintf("go-wrsbmkg: Properti %s di %s tidak ditemukan atau tidak valid!", p, f)
-		panic(e)
-	}
-}
-
 func (p *Penerima) PollingGempa(ctx context.Context) {
 	var identifierTerakhir string
 
@@ -67,8 +60,7 @@ listener:
 				continue listener
 			}
 
-			i, ok := j["identifier"].(string)
-			checkProperty(ok, "datagempa.json", "identifier")
+			i := j["identifier"].(string)
 
 			if identifierTerakhir == i {
 				continue listener
@@ -97,15 +89,12 @@ listener:
 				continue listener
 			}
 
-			r, ok1 := j["features"].([]interface{})
-			checkProperty(ok1, "lastQL.json", "features")
+			r := j["features"].([]interface{})
 
 			a := r[0].(map[string]interface{})
 
-			d, ok2 := a["properties"].(map[string]any)
-			checkProperty(ok2, "lastQL.json", "features[0].properties")
-			t, ok3 := d["time"].(string)
-			checkProperty(ok3, "lastQL.json", "features[0].properties.time")
+			d := a["properties"].(map[string]any)
+			t := d["time"].(string)
 
 			if informasiTerakhir == t {
 				continue listener
@@ -183,14 +172,14 @@ func (p *Penerima) Get(ctx context.Context, path string) ([]byte, *http.Response
 
 	resp, getErr := p.HTTP_Client.Do(req)
 	if getErr != nil {
-		return nil, nil, err
+		return nil, nil, getErr
 	}
 
 	b, readErr := io.ReadAll(resp.Body)
 	resp.Body.Close()
 
 	if readErr != nil {
-		return nil, resp, err
+		return nil, resp, readErr
 	}
 
 	return b, resp, nil
@@ -206,7 +195,7 @@ func (p *Penerima) GetJSON(ctx context.Context, path string) (DataJSON, *http.Re
 	var j DataJSON
 	parseErr := json.Unmarshal(b, &j)
 	if parseErr != nil {
-		return nil, resp, err
+		return nil, resp, parseErr
 	}
 
 	return j, resp, nil
