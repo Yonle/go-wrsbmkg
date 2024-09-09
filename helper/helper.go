@@ -43,6 +43,7 @@ func ParseGempa(g wrsbmkg.DataJSON) Alert {
 	}
 
 	magnitude, _ := strconv.ParseFloat(i["magnitude"].(string), 64)
+	felt, _ := i["felt"].(string)
 
 	return Alert{
 		Subject:     i["subject"].(string),
@@ -55,7 +56,7 @@ func ParseGempa(g wrsbmkg.DataJSON) Alert {
 		Magnitude:   magnitude,
 		Depth:       i["depth"].(string),
 		Shakemap:    i["shakemap"].(string),
-		Felt:        i["felt"].(string),
+		Felt:        felt,
 	}
 }
 
