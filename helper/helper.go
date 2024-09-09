@@ -59,9 +59,7 @@ func ParseGempa(g wrsbmkg.DataJSON) Alert {
 	}
 }
 
-func ParseRealtime(r wrsbmkg.DataJSON) Realtime {
-	fc := r["features"].([]interface{})
-	f := fc[0].(map[string]interface{})
+func parseRealtimeProperty(f map[string]interface{}) Realtime {
 	p := f["properties"].(map[string]interface{})
 	g := f["geometry"].(map[string]interface{})
 
@@ -78,4 +76,24 @@ func ParseRealtime(r wrsbmkg.DataJSON) Realtime {
 		Phase:       phase,
 		Status:      p["status"].(string),
 	}
+}
+
+func ParseRealtime(r wrsbmkg.DataJSON) Realtime {
+	fc := r["features"].([]interface{})
+	f := fc[0].(map[string]interface{})
+
+	return parseRealtimeProperty(f)
+}
+
+func ParseRiwayatGempa(r wrsbmkg.DataJSON) []Realtime {
+	fc := r["features"].([]interface{})
+
+	var history []Realtime
+	for _, f := range fc {
+		raw := f.(map[string]interface{})
+		parsed := parseRealtimeProperty(raw)
+		history = append(history, parsed)
+	}
+
+	return history
 }
