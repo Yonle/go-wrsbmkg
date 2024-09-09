@@ -29,6 +29,7 @@ func main() {
 	fmt.Println("WRS-BMKG")
 
 	for {
+		fmt.Println("---")
 		select {
 		case g := <-p.Gempa:
 			gempa := helper.ParseGempa(g)
