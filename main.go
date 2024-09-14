@@ -155,7 +155,7 @@ listener:
 //
 // Hasil dari channel [DataJSON] akan sama dengan apa yang dihasilkan oleh fungsi [DownloadGempa] dan [DownloadRealtime].
 //
-// Jangan panggil fungsi ini jika Penerima sudah dijalankan, Kecuali sudah dihentikan dengan [context.Context]
+// Jangan panggil fungsi ini jika Penerima sudah dijalankan, Kecuali sudah dihentikan dengan [context.Context].
 // Disarankan untuk menggunakan [context.WithCancel] untuk menghentikan penerimaan data.
 func (p *Penerima) MulaiPolling(ctx context.Context) error {
 	go p.PollingGempa(ctx)
@@ -225,6 +225,9 @@ func (p *Penerima) DownloadRiwayatGempa(ctx context.Context) (DataJSON, *http.Re
 
 // Ini akan mendownload teks narasi.
 // Setiap narasi tidak langsung tersedia setelah peringatan gempa diumumkan, Melainkan memerlukan beberapa waktu.
+//
+// Teks narasi yang diterima berbentuk HTML.
+// Elemen HTML dapat dihilangkan dengan memakai [codeberg.org/Yonle/go-wrsbmkg/helper].
 func (p *Penerima) DownloadNarasi(ctx context.Context, eventid int64) (narasi string, resp *http.Response, err error) {
 	path := fmt.Sprintf("/%d_narasi.txt", eventid)
 	b, resp, err := p.Get(ctx, path)

@@ -37,6 +37,7 @@ func main() {
 	fmt.Println("WRS-BMKG")
 
 	for {
+		fmt.Println("---")
 		select {
 		case g := <-p.Gempa:
 			gempa := helper.ParseGempa(g)
@@ -73,7 +74,9 @@ func main() {
 			)
 		case n := <-p.Narasi:
 			fmt.Println("\nNARASI ---")
-			fmt.Println(n)
+
+			narasi := helper.CleanNarasi(n)
+			fmt.Println(narasi)
 		}
 	}
 }

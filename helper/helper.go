@@ -2,9 +2,13 @@ package helper
 
 import (
 	"codeberg.org/Yonle/go-wrsbmkg"
+	"html"
+	"regexp"
 	"strconv"
 	"strings"
 )
+
+var htmlRegExp = regexp.MustCompile(`<[^>]*>`)
 
 type Alert struct {
 	Subject     string
@@ -97,4 +101,12 @@ func ParseRiwayatGempa(r wrsbmkg.DataJSON) []Realtime {
 	}
 
 	return history
+}
+
+// Membersihkan elemen-elemen HTML dari teks narasi.
+func CleanNarasi(narasi string) string {
+	cleaned := htmlRegExp.ReplaceAllString(narasi, "")
+	unescaped := html.UnescapeString(cleaned)
+
+	return unescaped
 }

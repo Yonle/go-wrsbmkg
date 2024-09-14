@@ -66,7 +66,9 @@ func main() {
 			)
 		case n := <-p.Narasi:
 			fmt.Println("\nNARASI ---")
-			fmt.Println(n)
+
+			narasi := helper.CleanNarasi(n)
+			fmt.Println(narasi)
 		}
 	}
 }
