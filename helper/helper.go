@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+var htmlBrRegExp = regexp.MustCompile(`<br>`)
 var htmlRegExp = regexp.MustCompile(`<[^>]*>`)
 
 type Alert struct {
@@ -105,7 +106,8 @@ func ParseRiwayatGempa(r wrsbmkg.DataJSON) []Realtime {
 
 // Membersihkan elemen-elemen HTML dari teks narasi.
 func CleanNarasi(narasi string) string {
-	cleaned := htmlRegExp.ReplaceAllString(narasi, "")
+	lined := htmlBrRegExp.ReplaceAllString(narasi, "\n")
+	cleaned := htmlRegExp.ReplaceAllString(lined, "")
 	unescaped := html.UnescapeString(cleaned)
 
 	return unescaped
