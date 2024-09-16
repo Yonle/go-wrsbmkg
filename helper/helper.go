@@ -52,7 +52,7 @@ func ParseGempa(g wrsbmkg.DataJSON) Alert {
 	felt, _ := i["felt"].(string)
 
 	return Alert{
-		Identifier:  j["identifier"].(string),
+		Identifier:  i["identifier"].(string),
 		Subject:     i["subject"].(string),
 		Description: i["description"].(string),
 		Area:        i["area"].(string),
