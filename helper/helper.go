@@ -12,6 +12,7 @@ var htmlBrRegExp = regexp.MustCompile(`<br>`)
 var htmlRegExp = regexp.MustCompile(`<[^>]*>`)
 
 type Alert struct {
+	Identifier  string
 	Subject     string
 	Description string
 	Headline    string
@@ -51,6 +52,7 @@ func ParseGempa(g wrsbmkg.DataJSON) Alert {
 	felt, _ := i["felt"].(string)
 
 	return Alert{
+		Identifier:  j["identifier"].(string),
 		Subject:     i["subject"].(string),
 		Description: i["description"].(string),
 		Area:        i["area"].(string),
