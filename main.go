@@ -164,37 +164,39 @@ func (p *Penerima) MulaiPolling(ctx context.Context) error {
 	return nil
 }
 
-func (p *Penerima) Get(ctx context.Context, path string) ([]byte, *http.Response, error) {
+func (p *Penerima) Get(ctx context.Context, path string) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", p.API_URL+path, nil)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	resp, getErr := p.HTTP_Client.Do(req)
-	if getErr != nil {
-		return nil, nil, getErr
+	return p.HTTP_Client.Do(req)
+}
+
+func (p *Penerima) GetBody(ctx context.Context, path string) ([]byte, *http.Response, error) {
+	resp, err := p.Get(ctx, path)
+	if err != nil {
+		return nil, resp, err
 	}
+
+	defer resp.Body.Close()
 
 	b, readErr := io.ReadAll(resp.Body)
-	resp.Body.Close()
-
-	if readErr != nil {
-		return nil, resp, readErr
-	}
-
-	return b, resp, nil
+	return b, resp, readErr
 }
 
 func (p *Penerima) GetJSON(ctx context.Context, path string) (DataJSON, *http.Response, error) {
-	b, resp, err := p.Get(ctx, path)
+	resp, err := p.Get(ctx, path)
 
 	if err != nil {
 		return nil, resp, err
 	}
 
+	defer resp.Body.Close()
+
 	var j DataJSON
-	parseErr := json.Unmarshal(b, &j)
-	if parseErr != nil {
+
+	if parseErr := json.NewDecoder(resp.Body).Decode(&j); parseErr != nil {
 		return nil, resp, parseErr
 	}
 
@@ -230,7 +232,7 @@ func (p *Penerima) DownloadRiwayatGempa(ctx context.Context) (DataJSON, *http.Re
 // Elemen HTML dapat dihilangkan dengan memakai [codeberg.org/Yonle/go-wrsbmkg/helper].
 func (p *Penerima) DownloadNarasi(ctx context.Context, eventid int64) (narasi string, resp *http.Response, err error) {
 	path := fmt.Sprintf("/%d_narasi.txt", eventid)
-	b, resp, err := p.Get(ctx, path)
+	b, resp, err := p.GetBody(ctx, path)
 	if err != nil {
 		return "", resp, err
 	}
