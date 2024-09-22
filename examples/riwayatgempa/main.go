@@ -13,7 +13,7 @@ func main() {
 	p := wrsbmkg.Penerima{
 		API_URL: wrsbmkg.DEFAULT_API_URL,
 
-		HTTP_Client: http.Client{
+		HTTP_Client: &http.Client{
 			Timeout: time.Second * 30,
 		},
 	}

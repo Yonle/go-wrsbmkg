@@ -10,12 +10,6 @@ import (
 	"time"
 )
 
-// Untuk beberapa alasan, Tipe data json akan seperti ini.
-// Pemakaian setiap data dapat dilihat dari JSON yang direturn oleh setiap endpoint.
-//
-// Data ini bisa diparse dengan [codeberg.org/Yonle/go-wrsbmkg/helper].
-type DataJSON map[string]interface{}
-
 // Penerima data gempa yang akan diambil dari API BMKG.
 //
 // Pastikan bahwa API_URL dan Interval sudah disertakan.
@@ -24,26 +18,36 @@ type Penerima struct {
 	// Interval penerimaan informasi baru
 	Interval time.Duration
 
-	GempaTerakhir    DataJSON
-	RealtimeTerakhir DataJSON
+	// Struct Raw_* dapat disimplikasi ke struct yang mudah dipakai
+	// Dengan memakai modul codeberg.org/Yonle/go-wrsbmkg/helper
+	GempaTerakhir    *Raw_DataGempa
+	RealtimeTerakhir *Raw_QL
 	NarasiTerakhir   string
 
-	Gempa    chan DataJSON
-	Realtime chan DataJSON
+	Gempa    chan *Raw_DataGempa
+	Realtime chan *Raw_QL
 	Narasi   chan string
 
 	API_URL string
 
 	// Timeout dan segala lainnya berkaitan request, Atur dengan http.Client
-	HTTP_Client http.Client
+	HTTP_Client *http.Client
 }
 
-var DEFAULT_API_URL string = "https://bmkg-content-inatews.storage.googleapis.com"
+// Ini akan memuat [Penerima] dengan parameter default.
+func BuatPenerima() *Penerima {
+	return &Penerima{
+		Gempa:    make(chan *Raw_DataGempa),
+		Realtime: make(chan *Raw_QL),
+		Narasi:   make(chan string),
 
-// Unix Milli Now
-func umn() int64 {
-	now := time.Now()
-	return now.UnixMilli()
+		Interval: time.Second * 15,
+		API_URL:  DEFAULT_API_URL,
+
+		HTTP_Client: &http.Client{
+			Timeout: time.Second * 30,
+		},
+	}
 }
 
 func (p *Penerima) PollingGempa(ctx context.Context) {
@@ -60,7 +64,7 @@ listener:
 				continue listener
 			}
 
-			i := j["identifier"].(string)
+			i := j.Identifier
 
 			if identifierTerakhir == i {
 				continue listener
@@ -89,12 +93,12 @@ listener:
 				continue listener
 			}
 
-			r := j["features"].([]interface{})
+			r := j.Features
 
-			a := r[0].(map[string]interface{})
+			a := r[0]
 
-			d := a["properties"].(map[string]any)
-			t := d["time"].(string)
+			d := a.Properties
+			t := d.Time
 
 			if informasiTerakhir == t {
 				continue listener
@@ -121,8 +125,7 @@ listener:
 				continue listener
 			}
 
-			i := p.GempaTerakhir["info"].(map[string]interface{})
-			d := i["eventid"].(string)
+			d := p.GempaTerakhir.Info.EventID
 			t, err := strconv.ParseInt(d, 10, 64)
 
 			if err != nil {
@@ -152,8 +155,6 @@ listener:
 
 // Fungsi ini akan mulai menerima data baru setiap waktu.
 // Sebelum memanggil, Pastikan bahwa Interval sudah ditentukan di Penerima{}.
-//
-// Hasil dari channel [DataJSON] akan sama dengan apa yang dihasilkan oleh fungsi [DownloadGempa] dan [DownloadRealtime].
 //
 // Jangan panggil fungsi ini jika Penerima sudah dijalankan, Kecuali sudah dihentikan dengan [context.Context].
 // Disarankan untuk menggunakan [context.WithCancel] untuk menghentikan penerimaan data.
@@ -185,44 +186,63 @@ func (p *Penerima) GetBody(ctx context.Context, path string) ([]byte, *http.Resp
 	return b, resp, readErr
 }
 
-func (p *Penerima) GetJSON(ctx context.Context, path string) (DataJSON, *http.Response, error) {
+// Ini akan mendownload informasi gempa.
+// Lihat data JSON asli di https://bmkg-content-inatews.storage.googleapis.com/datagempa.json
+func (p *Penerima) DownloadGempa(ctx context.Context) (*Raw_DataGempa, *http.Response, error) {
+	n := umn()
+	path := fmt.Sprintf("/datagempa.json?t=%d", n)
 	resp, err := p.Get(ctx, path)
-
 	if err != nil {
 		return nil, resp, err
 	}
 
 	defer resp.Body.Close()
 
-	var j DataJSON
-
-	if parseErr := json.NewDecoder(resp.Body).Decode(&j); parseErr != nil {
-		return nil, resp, parseErr
+	if resp.StatusCode >= 400 {
+		return nil, resp, fmt.Errorf("Status Code: %d", resp.StatusCode)
 	}
 
-	return j, resp, nil
-}
+	var dg Raw_DataGempa
 
-// Ini akan mendownload informasi gempa.
-// Lihat data JSON asli di https://bmkg-content-inatews.storage.googleapis.com/datagempa.json
-func (p *Penerima) DownloadGempa(ctx context.Context) (DataJSON, *http.Response, error) {
-	n := umn()
-	path := fmt.Sprintf("/datagempa.json?t=%d", n)
-	return p.GetJSON(ctx, path)
+	if err := json.NewDecoder(resp.Body).Decode(&dg); err != nil {
+		return nil, resp, err
+	}
+
+	return &dg, resp, nil
 }
 
 // Ini akan mendownload data gempa realtime.
 // Lihat data JSON asli di https://bmkg-content-inatews.storage.googleapis.com/lastQL.json
-func (p *Penerima) DownloadRealtime(ctx context.Context) (DataJSON, *http.Response, error) {
+func (p *Penerima) DownloadRealtime(ctx context.Context) (*Raw_QL, *http.Response, error) {
 	n := umn()
 	path := fmt.Sprintf("/lastQL.json?t=%d", n)
-	return p.GetJSON(ctx, path)
+	return p.downloadQL(ctx, path)
 }
 
 // Ini akan mendownload riwayat data gempa.
 // Lihat data JSON asli di https://bmkg-content-inatews.storage.googleapis.com/gempaQL.json
-func (p *Penerima) DownloadRiwayatGempa(ctx context.Context) (DataJSON, *http.Response, error) {
-	return p.GetJSON(ctx, "/gempaQL.json")
+func (p *Penerima) DownloadRiwayatGempa(ctx context.Context) (*Raw_QL, *http.Response, error) {
+	return p.downloadQL(ctx, "/gempaQL.json")
+}
+
+func (p *Penerima) downloadQL(ctx context.Context, path string) (*Raw_QL, *http.Response, error) {
+	resp, err := p.Get(ctx, path)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return nil, resp, fmt.Errorf("Status Code: %d", resp.StatusCode)
+	}
+
+	var q Raw_QL
+	if err := json.NewDecoder(resp.Body).Decode(&q); err != nil {
+		return nil, resp, err
+	}
+
+	return &q, resp, nil
 }
 
 // Ini akan mendownload teks narasi.

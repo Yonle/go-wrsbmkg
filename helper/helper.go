@@ -32,74 +32,67 @@ type Realtime struct {
 	Time        string
 	Magnitude   float64
 	Depth       float64
-	Coordinates []interface{} // ada yang berbeda disini.
+	Coordinates []any // ada yang berbeda disini.
 	Phase       int
 	Status      string
 }
 
-func ParseGempa(g wrsbmkg.DataJSON) Alert {
-	i := g["info"].(map[string]interface{})
-	point := i["point"].(map[string]interface{})
+func ParseGempa(g *wrsbmkg.Raw_DataGempa) *Alert {
+	i := g.Info
+	coordinates := strings.Split(i.Point.Coordinates, ",")
 
-	coordinates := strings.Split(point["coordinates"].(string), ",")
 	var newCoordinates []float64
 	for _, co := range coordinates {
 		f, _ := strconv.ParseFloat(co, 64)
 		newCoordinates = append(newCoordinates, f)
 	}
 
-	magnitude, _ := strconv.ParseFloat(i["magnitude"].(string), 64)
-	felt, _ := i["felt"].(string)
+	magnitude, _ := strconv.ParseFloat(i.Magnitude, 64)
 
-	return Alert{
-		Identifier:  g["identifier"].(string),
-		Subject:     i["subject"].(string),
-		Description: i["description"].(string),
-		Area:        i["area"].(string),
-		Potential:   i["potential"].(string),
-		Instruction: i["instruction"].(string),
+	return &Alert{
+		Identifier:  g.Identifier,
+		Subject:     i.Subject,
+		Description: i.Description,
+		Area:        i.Area,
+		Potential:   i.Potential,
+		Instruction: i.Instruction,
 
 		Coordinates: newCoordinates,
 		Magnitude:   magnitude,
-		Depth:       i["depth"].(string),
-		Shakemap:    i["shakemap"].(string),
-		Felt:        felt,
+		Depth:       i.Depth,
+		Shakemap:    i.Shakemap,
+		Felt:        i.Felt,
 	}
 }
 
-func parseRealtimeProperty(f map[string]interface{}) Realtime {
-	p := f["properties"].(map[string]interface{})
-	g := f["geometry"].(map[string]interface{})
+func parseRealtimeProperty(f *wrsbmkg.Raw_QL_Feature) *Realtime {
+	p := f.Properties
+	g := f.Geometry
 
-	magnitude, _ := strconv.ParseFloat(p["mag"].(string), 64)
-	depth, _ := strconv.ParseFloat(p["depth"].(string), 64)
-	phase, _ := strconv.Atoi(p["fase"].(string))
+	magnitude, _ := strconv.ParseFloat(p.Mag, 64)
+	depth, _ := strconv.ParseFloat(p.Depth, 64)
+	phase, _ := strconv.Atoi(p.Fase)
 
-	return Realtime{
-		Place:       p["place"].(string),
-		Time:        p["time"].(string),
+	return &Realtime{
+		Place:       p.Place,
+		Time:        p.Time,
 		Magnitude:   magnitude,
 		Depth:       depth,
-		Coordinates: g["coordinates"].([]interface{}),
+		Coordinates: g.Coordinates,
 		Phase:       phase,
-		Status:      p["status"].(string),
+		Status:      p.Status,
 	}
 }
 
-func ParseRealtime(r wrsbmkg.DataJSON) Realtime {
-	fc := r["features"].([]interface{})
-	f := fc[0].(map[string]interface{})
-
-	return parseRealtimeProperty(f)
+func ParseRealtime(r *wrsbmkg.Raw_QL) *Realtime {
+	f := r.Features[0]
+	return parseRealtimeProperty(&f)
 }
 
-func ParseRiwayatGempa(r wrsbmkg.DataJSON) []Realtime {
-	fc := r["features"].([]interface{})
-
-	var history []Realtime
-	for _, f := range fc {
-		raw := f.(map[string]interface{})
-		parsed := parseRealtimeProperty(raw)
+func ParseRiwayatGempa(r *wrsbmkg.Raw_QL) []*Realtime {
+	var history []*Realtime
+	for _, f := range r.Features {
+		parsed := parseRealtimeProperty(&f)
 		history = append(history, parsed)
 	}
 

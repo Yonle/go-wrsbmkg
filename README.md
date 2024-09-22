@@ -13,28 +13,16 @@ import (
 	"codeberg.org/Yonle/go-wrsbmkg/helper"
 	"context"
 	"fmt"
-	"net/http"
-	"time"
 )
 
 func main() {
-	p := wrsbmkg.Penerima{
-		Gempa:    make(chan wrsbmkg.DataJSON),
-		Realtime: make(chan wrsbmkg.DataJSON),
-		Narasi:   make(chan string),
-
-		Interval: time.Second * 15,
-		API_URL:  wrsbmkg.DEFAULT_API_URL,
-
-		HTTP_Client: http.Client{
-			Timeout: time.Second * 30,
-		},
-	}
+	p := wrsbmkg.BuatPenerima()
 
 	ctx := context.Background()
 	p.MulaiPolling(ctx)
 
 	fmt.Println("WRS-BMKG")
+	fmt.Println("Informasi akan dimuat dalam 15 detik....")
 
 	for {
 		fmt.Println("---")
