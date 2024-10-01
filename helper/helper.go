@@ -12,8 +12,11 @@ var htmlBrRegExp = regexp.MustCompile(`<br>`)
 var htmlRegExp = regexp.MustCompile(`<[^>]*>`)
 
 type Alert struct {
-	Identifier  string // Indonesia-InaTEWS-YYYYMMDDHHMMSS
-	EventID     string // YYYYMMDDHHMMSS
+	Identifier string // Indonesia-InaTEWS-YYYYMMDDHHMMSS
+	EventID    string // YYYYMMDDHHMMSS
+	Date       string
+	Time       string
+
 	Subject     string
 	Description string
 	Headline    string
