@@ -12,7 +12,8 @@ var htmlBrRegExp = regexp.MustCompile(`<br>`)
 var htmlRegExp = regexp.MustCompile(`<[^>]*>`)
 
 type Alert struct {
-	Identifier  string
+	Identifier  string // Indonesia-InaTEWS-YYYYMMDDHHMMSS
+	EventID     string // YYYYMMDDHHMMSS
 	Subject     string
 	Description string
 	Headline    string
@@ -25,6 +26,15 @@ type Alert struct {
 	Depth       string
 	Shakemap    string
 	Felt        string
+
+	// Properti-properti dibawah ini hanya tersedia saat Tsunami
+	WZMap        string
+	TTMap        string
+	SSHMap       string
+	Instruction1 string
+	Instruction2 string
+	Instruction3 string
+	WZAreas      []wrsbmkg.WZArea
 }
 
 type Realtime struct {
@@ -62,6 +72,14 @@ func ParseGempa(g *wrsbmkg.Raw_DataGempa) *Alert {
 		Depth:       i.Depth,
 		Shakemap:    i.Shakemap,
 		Felt:        i.Felt,
+
+		WZMap:        i.WZMap,
+		TTMap:        i.TTMap,
+		SSHMap:       i.SSHMap,
+		Instruction1: i.Instruction1,
+		Instruction2: i.Instruction2,
+		Instruction3: i.Instruction3,
+		WZAreas:      i.WZArea,
 	}
 }
 

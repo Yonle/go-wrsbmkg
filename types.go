@@ -25,12 +25,31 @@ type Raw_DataGempa struct {
 		Subject   string `json:"subject"`
 		Time      string `json:"time"`
 		Timesent  string `json:"timesent"`
+
+		// Properti-properti dibawah ini hanya tersedia saat Tsunami
+		WZMap        string `json:"wzmap"`
+		TTMap        string `json:"ttmap"`
+		SSHMap       string `json:"sshmap"`
+		Instruction1 string `json:"instruction1"`
+		Instruction2 string `json:"instruction2"`
+		Instruction3 string `json:"instruction3"`
+
+		WZArea []WZArea `json:"wzarea"`
 	} `json:"info"`
 	MsgType string `json:"msgType"`
 	Scope   string `json:"scope"`
 	Sender  string `json:"sender"`
 	Sent    string `json:"sent"`
 	Status  string `json:"status"`
+}
+
+// Tsunami: Warning Zone
+type WZArea struct {
+	Province string `json:"province"`
+	District string `json:"district"`
+	Level    string `json:"level"`
+	Date     string `json:"date"`
+	Time     string `json:"time"`
 }
 
 // Struct ini bisa disimplikasi dengan [codeberg.org/Yonle/go-wrsbmkg/helper].
