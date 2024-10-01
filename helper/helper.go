@@ -63,9 +63,14 @@ func ParseGempa(g *wrsbmkg.Raw_DataGempa) *Alert {
 	magnitude, _ := strconv.ParseFloat(i.Magnitude, 64)
 
 	return &Alert{
-		Identifier:  g.Identifier,
+		Identifier: g.Identifier,
+		EventID:    i.EventID,
+		Date:       i.Date,
+		Time:       i.Time,
+
 		Subject:     i.Subject,
 		Description: i.Description,
+		Headline:    i.Headline,
 		Area:        i.Area,
 		Potential:   i.Potential,
 		Instruction: i.Instruction,
