@@ -3,12 +3,14 @@ package wrsbmkg
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"time"
 )
+
+var ERR_TIMEOUT_WAITING_NARASI = errors.New("Timed out waiting for narasi")
 
 // Penerima data gempa yang akan diambil dari API BMKG.
 //
@@ -22,11 +24,9 @@ type Penerima struct {
 	// Dengan memakai modul codeberg.org/Yonle/go-wrsbmkg/helper
 	GempaTerakhir    *Raw_DataGempa
 	RealtimeTerakhir *Raw_QL
-	NarasiTerakhir   string
 
 	Gempa    chan *Raw_DataGempa
 	Realtime chan *Raw_QL
-	Narasi   chan string
 
 	API_URL string
 
@@ -39,7 +39,6 @@ func BuatPenerima() *Penerima {
 	return &Penerima{
 		Gempa:    make(chan *Raw_DataGempa),
 		Realtime: make(chan *Raw_QL),
-		Narasi:   make(chan string),
 
 		Interval: time.Second * 15,
 		API_URL:  DEFAULT_API_URL,
@@ -112,31 +111,20 @@ listener:
 	}
 }
 
-func (p *Penerima) PollingNarasi(ctx context.Context) {
-	var gempaTerakhir int64
+// FetchNarasi() untuk menunggu & menerima pesan narasi dari pihak BMKG setelah menerima alert.
+// Fungsi ini bersifat synchronous. Disarankan untuk dijalankan dengan goroutine.
+// Jika sudah melewati [deadline], Maka [err] akan mengreturn [ERR_TIMEOUT_WAITING_NARASI]
+func (p *Penerima) FetchNarasi(c context.Context, eventid string, deadline time.Time) (string, error) {
+	ctx, cancel := context.WithDeadlineCause(c, deadline, ERR_TIMEOUT_WAITING_NARASI)
+	defer cancel()
 
 listener:
 	for {
 		select {
 		case <-ctx.Done():
-			break listener
+			return "", ctx.Err()
 		case <-time.After(p.Interval):
-			if p.GempaTerakhir == nil {
-				continue listener
-			}
-
-			d := p.GempaTerakhir.Info.EventID
-			t, err := strconv.ParseInt(d, 10, 64)
-
-			if err != nil {
-				panic(err)
-			}
-
-			if gempaTerakhir == t {
-				continue listener
-			}
-
-			narasi, resp, err := p.DownloadNarasi(ctx, t)
+			narasi, resp, err := p.DownloadNarasi(ctx, eventid)
 			if err != nil {
 				continue listener
 			}
@@ -145,10 +133,7 @@ listener:
 				continue listener
 			}
 
-			gempaTerakhir = t
-			p.Narasi <- narasi
-			p.NarasiTerakhir = narasi
-			continue listener
+			return narasi, nil
 		}
 	}
 }
@@ -161,7 +146,6 @@ listener:
 func (p *Penerima) MulaiPolling(ctx context.Context) error {
 	go p.PollingGempa(ctx)
 	go p.PollingRealtime(ctx)
-	go p.PollingNarasi(ctx)
 	return nil
 }
 
@@ -250,8 +234,8 @@ func (p *Penerima) downloadQL(ctx context.Context, path string) (*Raw_QL, *http.
 //
 // Teks narasi yang diterima berbentuk HTML.
 // Elemen HTML dapat dihilangkan dengan memakai [codeberg.org/Yonle/go-wrsbmkg/helper].
-func (p *Penerima) DownloadNarasi(ctx context.Context, eventid int64) (narasi string, resp *http.Response, err error) {
-	path := fmt.Sprintf("/%d_narasi.txt", eventid)
+func (p *Penerima) DownloadNarasi(ctx context.Context, eventid string) (narasi string, resp *http.Response, err error) {
+	path := fmt.Sprintf("/%s_narasi.txt", eventid)
 	b, resp, err := p.GetBody(ctx, path)
 	if err != nil {
 		return "", resp, err

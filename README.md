@@ -9,11 +9,15 @@ Modul ini adalah modul non-resmi yang bukan dibuat oleh pihak-pihak BMKG. Modul 
 package main
 
 import (
-	"codeberg.org/Yonle/go-wrsbmkg"
-	"codeberg.org/Yonle/go-wrsbmkg/helper"
 	"context"
 	"fmt"
+	"time"
+
+	"codeberg.org/Yonle/go-wrsbmkg"
+	"codeberg.org/Yonle/go-wrsbmkg/helper"
 )
+
+var narasi = make(chan string)
 
 func main() {
 	p := wrsbmkg.BuatPenerima()
@@ -39,6 +43,15 @@ func main() {
 				gempa.Potential,
 				gempa.Instruction,
 			)
+
+			go func() {
+				teksNarasi, err := p.FetchNarasi(ctx, g.Info.EventID, time.Now().Add(time.Hour))
+				if err != nil {
+					return
+				}
+
+				narasi <- teksNarasi
+			}()
 		case r := <-p.Realtime:
 			realtime := helper.ParseRealtime(r)
 			fmt.Println("\nREALTIME ---")
@@ -60,7 +73,7 @@ func main() {
 				realtime.Phase,
 				realtime.Status,
 			)
-		case n := <-p.Narasi:
+		case n := <-narasi:
 			fmt.Println("\nNARASI ---")
 
 			narasi := helper.CleanNarasi(n)
