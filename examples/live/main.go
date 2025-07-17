@@ -37,7 +37,7 @@ func main() {
 			)
 
 			go func() {
-				teksNarasi, err := p.FetchNarasi(ctx, g.Info.EventID, time.Now().Add(time.Hour))
+				teksNarasi, err := p.FetchNarasi(ctx, g.Info.EventID, time.Now().Add(48*time.Hour))
 				if err != nil {
 					return
 				}
