@@ -38,6 +38,7 @@ type Alert struct {
 	Instruction2 string
 	Instruction3 string
 	WZAreas      []wrsbmkg.WZArea
+	ObsAreas     []wrsbmkg.ObsArea
 }
 
 type Realtime struct {
@@ -88,6 +89,7 @@ func ParseGempa(g *wrsbmkg.Raw_DataGempa) *Alert {
 		Instruction2: i.Instruction2,
 		Instruction3: i.Instruction3,
 		WZAreas:      i.WZArea,
+		ObsAreas:     i.ObsArea,
 	}
 }
 

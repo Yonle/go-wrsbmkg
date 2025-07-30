@@ -21,6 +21,16 @@ type WZArea struct {
 	Time     string `json:"time"`
 }
 
+// Tsunami: Detected Zone
+type ObsArea struct {
+	Location  string `json:"location"`
+	Latitude  string `json:"loclatitude"`
+	Longitude string `json:"loclongitude"`
+	Height    string `json:"height"` // in metres
+	Date      string `json:"date"`
+	Time      string `json:"time"`
+}
+
 type Raw_InfoGempa struct {
 	Area        string `json:"area"`
 	Date        string `json:"date"`
@@ -51,7 +61,8 @@ type Raw_InfoGempa struct {
 	Instruction2 string `json:"instruction2"`
 	Instruction3 string `json:"instruction3"`
 
-	WZArea []WZArea `json:"wzarea"`
+	WZArea  []WZArea  `json:"wzarea"`
+	ObsArea []ObsArea `json:"obsarea"`
 }
 
 // Struct ini bisa disimplikasi dengan [codeberg.org/Yonle/go-wrsbmkg/helper].

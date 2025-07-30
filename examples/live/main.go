@@ -44,6 +44,54 @@ func main() {
 
 				narasi <- teksNarasi
 			}()
+
+			var zonaObservasiText string
+
+			for _, area := range gempa.ObsAreas {
+				zonaObservasiText += fmt.Sprintf(
+					"- %s (%s %s) dengan ketinggian %s pada tanggal %s pukul %s\n",
+					area.Location, area.Latitude, area.Longitude, area.Height, area.Date, area.Time,
+				)
+			}
+
+			if len(zonaObservasiText) > 0 {
+				headerText := "TELAH TERJADI GEMPABUMI BERPOTENSI TSUNAMI\n\n"
+				headerText += fmt.Sprintf(
+					"Gempa terjadi pada %s, Pukul %s, berkekuatan M%02f, dengan kedalaman %s pada jarak %s\n",
+					gempa.Date, gempa.Time, gempa.Magnitude, gempa.Depth, gempa.Area,
+				)
+
+				zonaObservasiText = headerText + "\n" + zonaObservasiText
+
+				fmt.Println("\n---\n" + zonaObservasiText)
+			}
+
+			var zonaPeringatanText string
+
+			for _, area := range gempa.WZAreas {
+				zonaPeringatanText += fmt.Sprintf(
+					"- %s: %s, %s (estimasi waktu tiba: %s %s)\n",
+					area.Level,
+					area.Province,
+					area.District,
+					area.Date,
+					area.Time,
+				)
+			}
+
+			if len(zonaPeringatanText) > 0 {
+				zonaPeringatanText += fmt.Sprintf(
+					"\nInstruksi\n1. %s\n2. %s\n3. %s",
+					gempa.Instruction1,
+					gempa.Instruction2,
+					gempa.Instruction3,
+				)
+
+				zonaPeringatanText = "Zona-Zona Peringatan\n" + zonaPeringatanText
+
+				fmt.Println(zonaPeringatanText)
+			}
+
 		case r := <-p.Realtime:
 			realtime := helper.ParseRealtime(r)
 			fmt.Println("\nREALTIME ---")
