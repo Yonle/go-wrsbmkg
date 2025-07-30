@@ -49,7 +49,7 @@ func main() {
 
 			for _, area := range gempa.ObsAreas {
 				zonaObservasiText += fmt.Sprintf(
-					"- %s (%s %s) dengan ketinggian %s pada tanggal %s pukul %s\n",
+					"- %s (%s %s) dengan ketinggian %s Meter pada tanggal %s pukul %s\n",
 					area.Location, area.Latitude, area.Longitude, area.Height, area.Date, area.Time,
 				)
 			}
