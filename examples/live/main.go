@@ -61,6 +61,8 @@ func main() {
 					gempa.Date, gempa.Time, gempa.Magnitude, gempa.Depth, gempa.Area,
 				)
 
+				headerText += "\nBerdasarkan pengamatan muka air laut, tsunami telah terdeteksi di wilayah berikut:"
+
 				zonaObservasiText = headerText + "\n" + zonaObservasiText
 
 				fmt.Println("\n---\n" + zonaObservasiText)
@@ -81,13 +83,13 @@ func main() {
 
 			if len(zonaPeringatanText) > 0 {
 				zonaPeringatanText += fmt.Sprintf(
-					"\nInstruksi\n1. %s\n2. %s\n3. %s",
+					"\nSaran dan Arahan Status Peringatan\n1. %s\n2. %s\n3. %s",
 					gempa.Instruction1,
 					gempa.Instruction2,
 					gempa.Instruction3,
 				)
 
-				zonaPeringatanText = "Zona-Zona Peringatan\n" + zonaPeringatanText
+				zonaPeringatanText = "Daerah yang berpotensi tsunami berdasarkan pemodelan:\n" + zonaPeringatanText
 
 				fmt.Println(zonaPeringatanText)
 			}
